@@ -164,6 +164,7 @@ export default function ArenaView({ onExhausted }) {
               spec={spec}
               onSelectFile={(path) => actions.openFile(mode, path)}
               onExhausted={() => setShowExhausted(true)}
+              onOpenQuestion={() => setTab('brief')}
             />
           </aside>
         )}
@@ -181,6 +182,7 @@ export default function ArenaView({ onExhausted }) {
             spec={spec}
             onSelectFile={(path) => actions.openFile(mode, path)}
             onExhausted={() => setShowExhausted(true)}
+            onOpenQuestion={() => setTab('brief')}
           />
         </div>
       </div>
@@ -304,8 +306,11 @@ function RailTabs({ tab, setTab, report }) {
   );
 }
 
-function RailBody({ mode, tab, report, running, runLog, spec, onSelectFile, onExhausted }) {
-  if (tab === 'copilot') return <CopilotPanel mode={mode} onExhausted={onExhausted} />;
+function RailBody({ mode, tab, report, running, runLog, spec, onSelectFile, onExhausted, onOpenQuestion }) {
+  if (tab === 'copilot')
+    return (
+      <CopilotPanel mode={mode} onExhausted={onExhausted} onOpenQuestion={onOpenQuestion} />
+    );
   if (tab === 'tests')
     return (
       <div className="h-full">

@@ -4,6 +4,11 @@
  * The real assessment meter bills:
  *   system prompt + re-sent repo context + user turn + model output + tool-call payload.
  * We reproduce that shape so candidates internalise the real cost of a careless prompt.
+ *
+ * Context sizing changed when the assistant moved from "re-read whole source files" to
+ * "resolve a scope record" (question id, file paths, assertion ids, defect summary). A
+ * scope record is a fraction of a file, so the per-file charge dropped accordingly — the
+ * architecture got cheaper, not just the accounting.
  */
 
 export const TOTAL_BUDGET = 200_000;
@@ -15,10 +20,10 @@ export function estimateTokens(text) {
 }
 
 export const COST_MODEL = {
-  systemPrompt: 1_250,
-  perContextFile: 480,
-  activeFileBonus: 900,
-  turnOverhead: 320,
+  systemPrompt: 900,
+  perContextFile: 140,
+  activeFileBonus: 160,
+  turnOverhead: 200,
   outputRate: 1.08, // tokens charged per generated token (incl. reasoning overhead)
 };
 

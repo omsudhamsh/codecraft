@@ -12,7 +12,8 @@
     "verify:solved": "node scripts/verify.mjs --solved",
     "e2e": "node scripts/e2e.mjs",
     "e2e:auth": "node scripts/e2e.mjs --auth",
-    "check": "npm run verify && npm run verify:solved"
+    "check": "npm run verify && npm run verify:solved",
+    "measure:tokens": "node scripts/measure-tokens.mjs"
   },
   "dependencies": {
     "@clerk/react": "^6.17.8",

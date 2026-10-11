@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
   Ban,
+  Crosshair,
   Eraser,
   FileCode2,
-  FileQuestion,
   Lightbulb,
   Lock,
   Map,
@@ -15,6 +15,7 @@ import Markdown from '../common/Markdown.jsx';
 import Button from '../ui/Button.jsx';
 import { formatTokens } from '../../lib/tokens.js';
 import { useStudio } from '../../context/StudioContext.jsx';
+import { resolveScope } from '../../data/copilotEngine.js';
 import { SUGGESTED_PROMPTS, STARTUP_TIPS } from '../../data/copilotKnowledge.js';
 
 const THINKING_MS = 520;
@@ -26,7 +27,7 @@ const KIND_META = {
   process: { icon: Lightbulb, tone: 'text-violet-300', label: 'process' },
 };
 
-export default function CopilotPanel({ mode, onExhausted }) {
+export default function CopilotPanel({ mode, onExhausted, onOpenQuestion }) {
   const { sessions, budget, actions } = useStudio();
   const session = sessions[mode];
   const messages = session.messages ?? [];
@@ -37,6 +38,12 @@ export default function CopilotPanel({ mode, onExhausted }) {
 
   const locked = budget.locked;
   const readOnly = session.status === 'submitted';
+
+  // What the assistant currently knows. Shown in the header so the scope is never a mystery.
+  const scope = useMemo(
+    () => resolveScope({ mode, files: session.files, activeFile: session.activeFile, report: session.report, questionId: session.questionId }),
+    [mode, session.files, session.activeFile, session.report, session.questionId],
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -57,6 +64,8 @@ export default function CopilotPanel({ mode, onExhausted }) {
         text: response.answer,
         title: response.title,
         kind: response.kind,
+        detailed: response.detailed,
+        scope: response.scope,
         links: response.links,
         cost: response.cost,
         contextFiles: response.contextFiles,
@@ -76,10 +85,29 @@ export default function CopilotPanel({ mode, onExhausted }) {
         </span>
         <span
           className="rounded border border-line px-1.5 py-0.5 text-[9.5px] font-medium uppercase tracking-wide text-ink-faint"
-          title="This assistant points at files and explains concepts. It will not apply fixes."
+          title="The assistant points at files and explains concepts. It will not apply fixes."
         >
           Tutor mode
         </span>
+
+        {scope.question ? (
+          <span
+            className="ml-1 flex min-w-0 items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/[0.08] px-2 py-0.5 text-[10.5px] text-amber-200"
+            title={`Scoped to ${scope.question.id} — ${scope.question.title}`}
+          >
+            <Crosshair size={10} className="shrink-0" />
+            <span className="font-mono">{scope.question.id}</span>
+            <span className="truncate text-amber-100/80">{scope.question.title}</span>
+          </span>
+        ) : (
+          <span
+            className="ml-1 rounded-md border border-line px-2 py-0.5 text-[10.5px] text-ink-faint"
+            title="Open a question and the assistant answers for that question only"
+          >
+            no question open
+          </span>
+        )}
+
         {messages.length > 0 && (
           <button
             type="button"
@@ -93,7 +121,7 @@ export default function CopilotPanel({ mode, onExhausted }) {
       </header>
 
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-3 py-3 scroll-thin">
-        {messages.length === 0 && <EmptyState mode={mode} />}
+        {messages.length === 0 && <EmptyState mode={mode} scope={scope} onOpenQuestion={onOpenQuestion} />}
 
         {messages.map((message) =>
           message.role === 'user' ? (
@@ -180,26 +208,69 @@ export default function CopilotPanel({ mode, onExhausted }) {
 
 /* ------------------------------------------------------------------ pieces */
 
-function EmptyState({ mode }) {
+function EmptyState({ mode, scope, onOpenQuestion }) {
   return (
     <div className="space-y-3">
+      {scope.question ? (
+        <div className="rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3">
+          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-amber-300">
+            <Crosshair size={11} />
+            answering for {scope.question.id}
+          </div>
+          <p className="mt-1.5 text-[12.5px] font-medium text-ink">{scope.question.title}</p>
+          <dl className="mt-2 space-y-1 text-[11.5px]">
+            <div className="flex gap-2">
+              <dt className="shrink-0 text-ink-faint">File</dt>
+              <dd className="min-w-0 flex-1 truncate font-mono text-sky-300">{scope.question.file}</dd>
+            </div>
+            {scope.question.test && (
+              <div className="flex gap-2">
+                <dt className="shrink-0 text-ink-faint">Assertion</dt>
+                <dd className="font-mono text-ink-dim">{scope.question.test}</dd>
+              </div>
+            )}
+            {scope.assertion && (
+              <div className="flex gap-2">
+                <dt className="shrink-0 text-ink-faint">Status</dt>
+                <dd className="text-rose-300">
+                  {scope.assertion.ids.join(', ')} failing
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-line bg-surface-2/50 p-3">
+          <p className="text-[12.5px] leading-relaxed text-ink-dim">
+            No question is open, so I am answering from the repository as a whole — currently{' '}
+            <span className="text-ink">
+              {scope.problems.length} file{scope.problems.length === 1 ? '' : 's'} with open
+              problems
+            </span>
+            .
+          </p>
+          <button
+            type="button"
+            onClick={onOpenQuestion}
+            className="mt-2.5 flex items-center gap-1.5 rounded-md border border-line px-2 py-1.5 text-[11px] text-ink-dim transition-colors hover:border-amber-500/40 hover:text-amber-300"
+          >
+            <Crosshair size={11} />
+            Open a question to scope me
+          </button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-line bg-surface-2/50 p-3">
-        <p className="text-[12.5px] leading-relaxed text-ink-dim">
-          I have the complete file map of{' '}
-          <span className="font-mono text-ink">
-            {mode === 'A' ? 'shopsync-inventory-console' : 'taskflow-web'}
-          </span>{' '}
-          and I can see which of your files still have open problems.
-        </p>
-        <div className="mt-2.5 space-y-1.5">
+        <div className="space-y-1.5">
           <Limit icon={Map} tone="text-sky-300">
-            <strong className="text-ink-dim">I will</strong> point you at the exact file paths, clickable.
+            <strong className="text-ink-dim">I point</strong> at exact file paths, clickable.
           </Limit>
           <Limit icon={Lightbulb} tone="text-violet-300">
-            <strong className="text-ink-dim">I will</strong> teach the concept behind a rule.
+            <strong className="text-ink-dim">I teach</strong> the rule, briefly — ask{' '}
+            <em>in detail</em> for more.
           </Limit>
           <Limit icon={Ban} tone="text-rose-300">
-            <strong className="text-ink-dim">I will not</strong> write the fix, or apply an edit for you.
+            <strong className="text-ink-dim">I never</strong> write the fix.
           </Limit>
         </div>
       </div>
@@ -242,14 +313,27 @@ function AssistantMessage({ message, mode, onOpenFile, onFollowUp }) {
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-500/15 text-violet-300">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-violet-500/15 text-violet-300">
           <Icon size={11} />
         </div>
         <span className="text-[11.5px] font-medium text-ink-dim">{message.title}</span>
         <span className={`rounded border border-line px-1.5 py-0.5 text-[9px] uppercase tracking-wide ${meta.tone}`}>
           {meta.label}
         </span>
+        <span
+          className={`rounded border px-1.5 py-0.5 text-[9px] uppercase tracking-wide ${
+            message.detailed
+              ? 'border-amber-500/30 text-amber-300'
+              : 'border-line text-ink-faint'
+          }`}
+          title={message.detailed ? 'You asked for the long version' : 'Short answer — ask "in detail" for more'}
+        >
+          {message.detailed ? 'detailed' : 'brief'}
+        </span>
+        {message.scope?.questionId && (
+          <span className="font-mono text-[10px] text-amber-300/90">· {message.scope.questionId}</span>
+        )}
         {message.cost && (
           <button
             type="button"
@@ -261,6 +345,13 @@ function AssistantMessage({ message, mode, onOpenFile, onFollowUp }) {
           </button>
         )}
       </div>
+
+      {message.cost?.total > 4000 && !message.detailed && (
+        <p className="text-[10.5px] leading-relaxed text-ink-faint">
+          That was a long answer. Short questions get short answers here — ask{' '}
+          <em>in detail</em> when you actually want the full version.
+        </p>
+      )}
 
       {showCost && message.cost && (
         <dl className="grid grid-cols-2 gap-x-3 gap-y-0.5 rounded-lg border border-line bg-surface-2 px-3 py-2 font-mono text-[10.5px] text-ink-faint">
@@ -314,7 +405,6 @@ function AssistantMessage({ message, mode, onOpenFile, onFollowUp }) {
               onClick={() => onFollowUp(q)}
               className="flex items-center gap-1 rounded-md border border-line px-2 py-1 text-[10.5px] text-ink-faint transition-colors hover:border-sky-500/40 hover:text-sky-300"
             >
-              <FileQuestion size={10} />
               {q}
             </button>
           ))}

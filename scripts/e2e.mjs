@@ -314,7 +314,7 @@ async function main() {
   await sleep(2200);
 
   const afterFix = await text();
-  check('fix request is refused', afterFix.includes('not going to make that change'));
+  check('fix request is refused', afterFix.includes('will not make that change'));
   check('refusal redirects to navigation', afterFix.includes('which files have errors'));
 
   const applyButtons = await cdp.evaluate(`
@@ -329,7 +329,7 @@ async function main() {
   const afterWiring = await text();
   check(
     'assistant explains the wiring',
-    afterWiring.includes('How a request travels') && afterWiring.includes('/api/tracks'),
+    afterWiring.includes('Request path') && afterWiring.includes('/api/tracks'),
     'request flow diagram',
   );
 
@@ -337,7 +337,17 @@ async function main() {
   await sleep(250);
   await cdp.evaluate(send());
   await sleep(2200);
-  check('assistant explains syntax', (await text()).includes('Syntax lookup'));
+  const syntaxAnswer = await text();
+  check('assistant explains syntax briefly', syntaxAnswer.includes('Name the construct'));
+  check('answer is labelled brief', syntaxAnswer.includes('brief'));
+
+  await cdp.evaluate(ask('in detail: what does ?? do'));
+  await sleep(250);
+  await cdp.evaluate(send());
+  await sleep(2200);
+  const detailAnswer = await text();
+  check('detail request expands the answer', detailAnswer.includes('Syntax lookup'));
+  check('expanded answer is labelled detailed', detailAnswer.includes('detailed'));
 
   /* ---------------------------------------------------------------- reset token */
   await goto('/');
@@ -362,6 +372,35 @@ async function main() {
     'question opens in the arena',
     /D-\d\d|F-\d\d/.test(inArena) && inArena.includes('Hint 1 of'),
     inArena.match(/Hint 1 of \d/)?.[0] ?? 'no hint control',
+  );
+
+  // The assistant must be scoped to the open question, not answering generically.
+  const pickedId = inArena.match(/D-\d\d|F-\d\d/)?.[0] ?? null;
+  check('a question id is in play', Boolean(pickedId), pickedId ?? 'none found');
+
+  await cdp.evaluate(clickByText('Assistant'));
+  await sleep(500);
+  const scopedBadge = await text();
+  check(
+    'assistant shows the active question',
+    Boolean(pickedId) && scopedBadge.includes(pickedId) && !scopedBadge.includes('no question open'),
+    `badge shows ${pickedId}`,
+  );
+
+  await cdp.evaluate(ask('help me solve this'));
+  await sleep(250);
+  await cdp.evaluate(send());
+  await sleep(2200);
+  const scopedAnswer = await text();
+  check(
+    'answer is grounded in the question',
+    scopedAnswer.includes('Target file') && scopedAnswer.includes('server/services/libraryService.js'),
+    'scope block names the file',
+  );
+  check(
+    'answer quotes the graded assertion',
+    scopedAnswer.includes('A-01') && scopedAnswer.includes('removeFromLibrary'),
+    'assertion referenced',
   );
 
   /* ---------------------------------------------------------------- round B */

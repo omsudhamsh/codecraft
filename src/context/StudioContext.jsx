@@ -544,6 +544,7 @@ export function StudioProvider({ children }) {
         files: session.files,
         activeFile: session.activeFile,
         report: session.report,
+        questionId: session.questionId,
         history: state.budget.turns.filter((t) => t.mode === mode),
       });
 

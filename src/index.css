@@ -1,0 +1,123 @@
+@import 'tailwindcss';
+
+/**
+ * CapEx-AI Practice Studio — AMOLED palette.
+ *
+ * Canvas is true #000 so OLED pixels switch off entirely; elevation is expressed with
+ * near-black greys rather than lighter surfaces, which is what makes the panels readable
+ * without washing out the background.
+ */
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, 'SFMono-Regular', 'Cascadia Code',
+    Menlo, Consolas, monospace;
+
+  --color-canvas: #000000;
+  --color-surface: #0a0a0b;
+  --color-surface-2: #121214;
+  --color-surface-3: #1a1a1d;
+  --color-line: #242428;
+  --color-line-soft: #191919;
+
+  --color-ink: #f2f2f3;
+  --color-ink-dim: #a1a1a6;
+  --color-ink-faint: #6e6e76;
+
+  --color-brand: #38bdf8;
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  --color-danger: #fb7185;
+  --color-violet: #a78bfa;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    background-color: #000;
+  }
+
+  body {
+    margin: 0;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(56, 189, 248, 0.3);
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #26262b;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3a42;
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  button,
+  select {
+    font-family: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(56, 189, 248, 0.65);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .panel {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.75rem;
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #26262b transparent;
+  }
+
+  .hairline-top {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.04) 0%,
+    rgba(148, 163, 184, 0.14) 50%,
+    rgba(148, 163, 184, 0.04) 100%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s linear infinite;
+}

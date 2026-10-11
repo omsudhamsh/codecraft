@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CodeCraft</title>
+    <script>
+      // GitHub Pages serves static files only, so a deep link such as /codecraft/arena/A
+      // 404s before the SPA boots. Bounce it back through the entry document, preserving
+      // the path in the hash so the client router can pick it up.
+      var base = '/codecraft/';
+      var l = window.location;
+      var target = l.pathname.indexOf(base) === 0 ? l.pathname.slice(base.length) : l.pathname;
+      l.replace(
+        l.protocol + '//' + l.host + base + '#' + target + l.search + l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

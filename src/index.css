@@ -83,6 +83,55 @@
     outline: 2px solid rgba(56, 189, 248, 0.65);
     outline-offset: 2px;
   }
+
+  /* Clerk surfaces, pulled onto the same AMOLED palette as the app. */
+  .cc-clerk-card {
+    background-color: var(--color-surface) !important;
+    border: 1px solid var(--color-line) !important;
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.9) !important;
+  }
+
+  .cc-clerk-title {
+    color: var(--color-ink) !important;
+  }
+
+  .cc-clerk-subtitle {
+    color: var(--color-ink-dim) !important;
+  }
+
+  .cc-clerk-primary {
+    background-color: #38bdf8 !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+    box-shadow: none !important;
+  }
+
+  .cc-clerk-primary:hover {
+    background-color: #7dd3fc !important;
+  }
+
+  .cc-clerk-social {
+    background-color: var(--color-surface-2) !important;
+    border: 1px solid var(--color-line) !important;
+    color: var(--color-ink) !important;
+  }
+
+  .cc-clerk-social:hover {
+    background-color: var(--color-surface-3) !important;
+  }
+
+  .cc-clerk-link {
+    color: #38bdf8 !important;
+  }
+
+  .cc-clerk-avatar {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .cc-clerk-popover-action:hover {
+    background-color: var(--color-surface-3) !important;
+  }
 }
 
 @layer utilities {

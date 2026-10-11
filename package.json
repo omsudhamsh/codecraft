@@ -11,9 +11,11 @@
     "verify": "node scripts/verify.mjs",
     "verify:solved": "node scripts/verify.mjs --solved",
     "e2e": "node scripts/e2e.mjs",
+    "e2e:auth": "node scripts/e2e.mjs --auth",
     "check": "npm run verify && npm run verify:solved"
   },
   "dependencies": {
+    "@clerk/react": "^6.17.8",
     "lucide-react": "^0.451.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

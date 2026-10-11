@@ -23,6 +23,8 @@ import Card from '../components/ui/Card.jsx';
 import Badge from '../components/ui/Badge.jsx';
 import Stat from '../components/ui/Stat.jsx';
 import StartTestModal from '../components/start/StartTestModal.jsx';
+import { AuthNotConfiguredNote } from '../components/auth/RequireAuth.jsx';
+import { useIdentity } from '../context/IdentityContext.jsx';
 import { useStudio } from '../context/StudioContext.jsx';
 import { formatTokensLong, pct, TOTAL_BUDGET } from '../lib/tokens.js';
 import { questionsFor } from '../data/questions.js';
@@ -46,6 +48,7 @@ const MODE_META = {
 
 export default function DashboardView({ onExhausted }) {
   const { sessions, progress, budget, modes, actions } = useStudio();
+  const identity = useIdentity();
   const [starting, setStarting] = useState(false);
 
   const overall = useMemo(() => {
@@ -60,11 +63,14 @@ export default function DashboardView({ onExhausted }) {
 
   return (
     <div className="mx-auto h-full w-full max-w-6xl space-y-6 overflow-y-auto px-4 py-6 scroll-thin">
+      <AuthNotConfiguredNote />
+
       <header className="panel p-6">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="brand">Capgemini Exceller · Round 2</Badge>
           <Badge tone="violet">13–16 LPA</Badge>
           <Badge tone="neutral">AI-Assisted Full-Stack</Badge>
+          {identity.user && <Badge tone="ok">signed in as {identity.user.name}</Badge>}
         </div>
 
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-[26px]">

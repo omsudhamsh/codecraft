@@ -192,7 +192,39 @@ async function main() {
       return 'sent';
     })()`;
 
-  const tokenMeter = () => cdp.evaluate(`${DOC}.match(/([0-9.]+k?) \\/ 200k/)?.[1] ?? '0'`);
+  // Built with new RegExp rather than a literal: a `\/` inside a JS template literal
+  // collapses to `/` and would ship a malformed expression to the page. The capture
+  // group is required — match[1] on a group-less pattern is undefined.
+  const tokenMeter = () =>
+    cdp.evaluate(`((${DOC}.match(new RegExp('([0-9.]+k?) / 200k')) || ['0'])[1])`);
+
+  /* ---------------------------------------------------------------- auth mode
+     `npm run e2e:auth` checks the sign-in wall instead of the full product flow.
+     Requires a server started with VITE_CLERK_PUBLISHABLE_KEY set. */
+  if (process.argv.includes('--auth')) {
+    await goto('/');
+    const dash = await text();
+    check('dashboard renders signed out', dash.includes('Start a mock test'));
+    check('sign-in control in the nav', dash.includes('Sign in') && dash.includes('Sign up'));
+    check('no "configure your application" crash', !dash.includes('Clerk: '));
+
+    await goto('/arena/A');
+    check('rounds are gated', (await text()).includes('Sign in to start a round'));
+
+    await goto('/questions');
+    check('question bank is gated', (await text()).includes('Sign in to start a round'));
+
+    await goto('/analytics');
+    check('analytics stays public', (await text()).includes('Run history'));
+
+    const realErrors = cdp.consoleErrors.filter(
+      (e) => typeof e === 'string' && !/favicon|React DevTools|Clerk/i.test(e),
+    );
+    check('no uncaught runtime errors', realErrors.length === 0, realErrors.slice(0, 3).join(' | '));
+
+    ws.close();
+    return;
+  }
 
   /* ---------------------------------------------------------------- dashboard */
   await goto('/');

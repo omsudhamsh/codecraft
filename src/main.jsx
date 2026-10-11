@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.jsx';
+import { IdentityProvider } from './context/IdentityContext.jsx';
 import './index.css';
 
 /**
@@ -23,8 +24,10 @@ restoreDeepLink();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <IdentityProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </IdentityProvider>
   </StrictMode>,
 );

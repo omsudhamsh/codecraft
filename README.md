@@ -165,6 +165,64 @@ All state persists to `localStorage` under `capex-studio:*`. Nothing leaves the 
 
 ---
 
+## Authentication (Clerk)
+
+Sign-in is wired with [Clerk](https://clerk.com), linked to app `app_3KYBIeYc8ZUOsVfcKLImM4nvcY9`.
+
+- **`@clerk/react` v6** — `clerk init` detected the Vite/React stack and installed the SDK.
+- **Adapter, not a dependency leak.** Nothing in the app imports Clerk directly; everything reads
+  identity from `useIdentity()` in `src/context/IdentityContext.jsx`. Two bridges:
+  - key configured → `ClerkProvider` + `useUser`, rounds and the question bank are gated behind
+    sign-in, and each recorded run is attributed to the signed-in user id;
+  - no key → a local guest identity, so the studio still runs for anyone who clones the repo.
+- **Controls** live in the top bar (`Show when="signed-out"` / `when="signed-in"`), and the gate
+  screen offers sign-in and sign-up. Clerk's appearance is themed onto the app's AMOLED palette
+  through `appearance.variables` plus a `.cc-clerk-*` block in `src/index.css`.
+
+### Local setup
+
+```bash
+cp .env.example .env.local     # then paste your keys from the Clerk dashboard
+npm run dev
+```
+
+`VITE_CLERK_PUBLISHABLE_KEY` is the only value the browser needs. `CLERK_SECRET_KEY` is server-only
+and the app never reads it — it must never appear in a `VITE_`-prefixed variable.
+
+### Before deploying
+
+`clerk doctor` reports one thing you have to fix yourself:
+
+```
+! Instance IDs: development (ins_...) (production not configured)
+```
+
+The dev key only works on localhost. `clerk deploy` creates the production instance, but it needs a
+real domain with DNS records, so it has to run in an interactive terminal:
+
+```bash
+clerk deploy          # creates the production instance, prints DNS records, verifies the domain
+clerk deploy status   # confirm
+```
+
+Then set the **production** publishable key in your host:
+
+```bash
+npx vercel env add VITE_CLERK_PUBLISHABLE_KEY production   # paste pk_live_...
+npx vercel env add CLERK_SECRET_KEY production            # optional, server-side only
+npx vercel --prod
+```
+
+### Verification
+
+```bash
+npm run check                      # suites
+npm run e2e                        # full product flow, guest mode
+npm run e2e:auth                   # sign-in wall + Clerk wiring, signed out
+```
+
+---
+
 ## Deployment
 
 Fully client-side — there is no backend to host, so a static build is the whole deployment.

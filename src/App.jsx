@@ -4,6 +4,7 @@ import { Compass } from 'lucide-react';
 
 import TopBar from './components/layout/TopBar.jsx';
 import TokenExhaustedModal from './components/common/TokenExhaustedModal.jsx';
+import RequireAuth from './components/auth/RequireAuth.jsx';
 import DashboardView from './views/DashboardView.jsx';
 import ArenaView from './views/ArenaView.jsx';
 import AnalyticsView from './views/AnalyticsView.jsx';
@@ -40,8 +41,22 @@ function Shell() {
       <main className="relative min-h-0 flex-1 pb-14 md:pb-0">
         <Routes>
           <Route path="/" element={<DashboardView onExhausted={() => setShowExhausted(true)} />} />
-          <Route path="/questions" element={<QuestionsView />} />
-          <Route path="/arena/:mode" element={<ArenaView onExhausted={() => setShowExhausted(true)} />} />
+          <Route
+            path="/questions"
+            element={
+              <RequireAuth>
+                <QuestionsView />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/arena/:mode"
+            element={
+              <RequireAuth>
+                <ArenaView onExhausted={() => setShowExhausted(true)} />
+              </RequireAuth>
+            }
+          />
           <Route path="/analytics" element={<AnalyticsView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

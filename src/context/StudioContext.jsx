@@ -17,6 +17,7 @@ import { MODE_A_SUITE, MODE_A_MOCKS } from '../data/modeA/tests.js';
 import { MODE_B, MODE_B_FILES } from '../data/modeB/repo.js';
 import { MODE_B_SUITE, MODE_B_MOCKS, MODE_B_SEED } from '../data/modeB/tests.js';
 import { answerPrompt } from '../data/copilotEngine.js';
+import { useIdentity } from './IdentityContext.jsx';
 
 const StudioContext = createContext(null);
 
@@ -247,6 +248,8 @@ function reducer(state, action) {
           durationMs: report.durationMs,
           timeUsedMs,
           verdict: report.verdict,
+          stack: action.stack,
+          actor: action.actor,
           failing: report.results.filter((r) => r.status === 'fail').map((r) => r.id),
         },
       ].slice(-40);
@@ -290,6 +293,7 @@ const CHANGED_FILES_HINT = [
 
 export function StudioProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, null, blankState);
+  const identity = useIdentity();
   const runIdRef = useRef(0);
   const persistTimer = useRef(null);
 
@@ -503,11 +507,13 @@ export function StudioProvider({ children }) {
         report: result,
         at,
         timeUsedMs: session.startedAt ? Date.now() - session.startedAt : 0,
+        stack: session.stack ?? 'react-node',
+        actor: identity.user?.id ?? null,
       });
 
       return result;
     },
-    [state.sessions],
+    [state.sessions, identity.user?.id],
   );
 
   /* ---------------------------------------------------------------- copilot */

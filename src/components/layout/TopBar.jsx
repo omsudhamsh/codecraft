@@ -3,6 +3,7 @@ import { BarChart3, HelpCircle, Hexagon, LayoutDashboard, RotateCcw, Wrench, Swo
 
 import TokenMeter from './TokenMeter.jsx';
 import Button from '../ui/Button.jsx';
+import { AuthControls } from '../../context/IdentityContext.jsx';
 import { useStudio } from '../../context/StudioContext.jsx';
 
 const NAV = [
@@ -58,6 +59,7 @@ export default function TopBar({ onExhausted }) {
         <div className="w-56">
           <TokenMeter onExhausted={onExhausted} />
         </div>
+        <AuthControls />
         <Button
           size="sm"
           variant="subtle"

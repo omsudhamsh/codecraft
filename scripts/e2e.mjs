@@ -165,6 +165,16 @@ async function main() {
 
   const text = () => cdp.evaluate(DOC);
 
+  /** Clerk's SDK is fetched from the network, so auth UI appears a beat after mount. */
+  const waitForText = async (needle, timeoutMs = 12000) => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if ((await text()).includes(needle)) return true;
+      await sleep(400);
+    }
+    return false;
+  };
+
   const clickByText = (needle) => `
     (() => {
       const el = [...document.querySelectorAll('button, a')]
@@ -205,7 +215,11 @@ async function main() {
     await goto('/');
     const dash = await text();
     check('dashboard renders signed out', dash.includes('Start a mock test'));
-    check('sign-in control in the nav', dash.includes('Sign in') && dash.includes('Sign up'));
+    check(
+      'sign-in control in the nav',
+      (await waitForText('Sign in')) && (await waitForText('Sign up')),
+      'Clerk controls mounted',
+    );
     check('no "configure your application" crash', !dash.includes('Clerk: '));
 
     await goto('/arena/A');

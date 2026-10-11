@@ -9,3 +9,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Committed on purpose: holds only the Clerk *publishable* key (pk_...), which is public
+# by design. Never add a secret key (sk_...) to this file.
+!.env.production
